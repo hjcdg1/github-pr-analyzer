@@ -23,10 +23,11 @@ import {
   GitPullRequest,
   Calendar,
   User,
-  Shuffle
+  Shuffle,
+  Download
 } from 'lucide-react';
 import { TabData, Settings } from '../types';
-import { GitHubCommit, GitHubSearchAPI } from '../utils/github-search';
+import { GitHubCommit, GitHubSearchAPI, GitHubPR } from '../utils/github-search';
 import { Tooltip } from 'antd';
 import PRChart from '../components/PRChart';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -243,6 +244,67 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
     }
   };
 
+  const exportToCSV = (prs: GitHubPR[]) => {
+    if (!prs || prs.length === 0) {
+      message.warning('No data to export');
+      return;
+    }
+
+    const csvHeaders = [
+      'PR Number',
+      'PR Title',
+      'PR Description',
+      'PR Merged At',
+      'Commits'
+    ];
+
+    const csvRows = prs
+      .sort((a, b) => new Date(b.merged_at!).getTime() - new Date(a.merged_at!).getTime())
+      .map(pr => {
+        // Format merged date
+        const mergedAt = dayjs(pr.merged_at).format('YYYY.MM.DD HH:mm:ss');
+
+        // Format commits
+        const commits = pr.commits || [];
+        const sortedCommits = commits.sort((a: GitHubCommit, b: GitHubCommit) =>
+          new Date(b.commit.author.date).getTime() - new Date(a.commit.author.date).getTime()
+        );
+
+        const commitsText = sortedCommits.map((commit: GitHubCommit) => {
+          const shortSha = commit.sha.substring(0, 7);
+          const message = commit.commit.message.split('\n')[0];
+          const date = dayjs(commit.commit.author.date).format('MM/DD HH:mm');
+          const author = commit.author?.login || commit.commit.author.name;
+          return `[${shortSha}] ${message} (${date} by ${author})`;
+        }).join('\n');
+
+        return [
+          pr.number.toString(),
+          `"${(pr.title || '').replace(/"/g, '""')}"`,
+          `"${(pr.body || '').replace(/"/g, '""')}"`,
+          mergedAt,
+          `"${commitsText.replace(/"/g, '""')}"`
+        ];
+      });
+
+    const csvContent = [csvHeaders, ...csvRows]
+      .map(row => row.join(','))
+      .join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pr-analysis-${dayjs().format('YYYY-MM-DD-HHmmss')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    message.success(`Exported ${prs.length} PRs to CSV`);
+  };
+
   const hasMixedCommits = (pr: any, usernames: string[]): boolean => {
     if (!pr.commits || pr.commits.length === 0) return false;
 
@@ -404,7 +466,19 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
               <>
                 <PRChart prs={tab.prs} />
 
-                <Card className="pr-list" title={`Pull Requests (${tab.prs.length} total)`}>
+                <Card
+                  className="pr-list"
+                  title={`Pull Requests (${tab.prs.length} total)`}
+                  extra={
+                    <Button
+                      icon={<Download size={14} />}
+                      onClick={() => exportToCSV(tab.prs || [])}
+                      style={{ fontSize: '12px', height: '28px' }}
+                    >
+                      Export CSV
+                    </Button>
+                  }
+                >
                   <div style={{ marginBottom: 16 }}>
                     <Select
                       value={pageSize}
