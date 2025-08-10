@@ -21,6 +21,7 @@ declare global {
 
 function App() {
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+  const [currentThemePreference, setCurrentThemePreference] = useState<'system' | 'light' | 'dark'>('system');
   const [settings, setSettings] = useState<Settings>({
     theme: 'system',
   });
@@ -30,43 +31,48 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (settings.theme) {
-      applyTheme();
+    if (currentThemePreference) {
+      applyTheme(currentThemePreference);
     }
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleThemeChange = () => {
-      if (settings.theme === 'system') {
-        applyTheme();
+    const handleSystemThemeChange = () => {
+      if (currentThemePreference === 'system') {
+        applyTheme(currentThemePreference);
       }
     };
 
-    mediaQuery.addEventListener('change', handleThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleThemeChange);
-  }, [settings.theme]);
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, [currentThemePreference]);
 
   const loadSettings = async () => {
     if (window.electronAPI) {
       const savedSettings = await window.electronAPI.getSettings();
       if (savedSettings) {
         setSettings(savedSettings);
+        // Set initial theme preference from settings or default to system
+        setCurrentThemePreference(savedSettings.theme || 'system');
+      } else {
+        // Default theme preference
+        setCurrentThemePreference('system');
       }
     }
   };
 
-  const applyTheme = async () => {
+  const applyTheme = async (themePreference: 'system' | 'light' | 'dark') => {
     let themeToApply: 'light' | 'dark' = 'light';
 
-    if (settings.theme === 'system') {
+    if (themePreference === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       themeToApply = prefersDark ? 'dark' : 'light';
       if (window.electronAPI) {
         await window.electronAPI.setTheme('system');
       }
     } else {
-      themeToApply = settings.theme as 'light' | 'dark';
+      themeToApply = themePreference as 'light' | 'dark';
       if (window.electronAPI) {
-        await window.electronAPI.setTheme(settings.theme);
+        await window.electronAPI.setTheme(themePreference);
       }
     }
 
@@ -79,6 +85,12 @@ function App() {
     if (window.electronAPI) {
       await window.electronAPI.saveSettings(newSettings);
     }
+  };
+
+  const handleThemeChange = (theme: string) => {
+    const validTheme = theme as 'system' | 'light' | 'dark';
+    setCurrentThemePreference(validTheme);
+    setSettings(prev => ({ ...prev, theme: validTheme }));
   };
 
   return (
@@ -116,8 +128,9 @@ function App() {
                   path="/settings"
                   element={
                     <SettingsPage
-                      settings={settings}
+                      settings={{ ...settings, theme: currentThemePreference }}
                       updateSettings={updateSettings}
+                      onThemeChange={handleThemeChange}
                     />
                   }
                 />
