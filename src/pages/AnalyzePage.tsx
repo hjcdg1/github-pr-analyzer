@@ -22,10 +22,12 @@ import {
   AlertCircle,
   GitPullRequest,
   Calendar,
-  User
+  User,
+  Shuffle
 } from 'lucide-react';
 import { TabData, Settings } from '../types';
 import { GitHubCommit, GitHubSearchAPI } from '../utils/github-search';
+import { Tooltip } from 'antd';
 import PRChart from '../components/PRChart';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import CommitList from '../components/CommitList';
@@ -241,6 +243,19 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
     }
   };
 
+  const hasMixedCommits = (pr: any, usernames: string[]): boolean => {
+    if (!pr.commits || pr.commits.length === 0) return false;
+
+    const targetCommits = pr.commits.filter((commit: GitHubCommit) =>
+      usernames.some(username =>
+        commit.author?.login?.toLowerCase() === username.toLowerCase() ||
+        commit.commit.author?.name?.toLowerCase() === username.toLowerCase()
+      )
+    );
+
+    return targetCommits.length > 0 && targetCommits.length < pr.commits.length;
+  };
+
   const renderTabContent = (tab: TabData) => {
     const status = connectionStatus[tab.id] || 'idle';
     const currentPageNum = currentPage[tab.id] || 1;
@@ -420,6 +435,17 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                                   #{pr.number}
                                 </a>
                               </Text>
+                              {hasMixedCommits(pr, tab.usernames) && (
+                                <Tooltip title="이 PR에는 다른 작성자의 커밋도 포함되어 있습니다">
+                                  <Shuffle
+                                    size={12}
+                                    style={{
+                                      color: '#faad14',
+                                      cursor: 'help'
+                                    }}
+                                  />
+                                </Tooltip>
+                              )}
                             </Space>
                             <Space size={6} wrap>
                               <span style={{

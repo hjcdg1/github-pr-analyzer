@@ -7,14 +7,14 @@ interface MarkdownRendererProps {
 
 const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  
+
   useEffect(() => {
     // Check current theme from CSS variable
     const checkTheme = () => {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       setTheme(isDark ? 'dark' : 'light');
     };
-    
+
     checkTheme();
     // Listen for theme changes
     const observer = new MutationObserver(checkTheme);
@@ -22,7 +22,7 @@ const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
       attributes: true,
       attributeFilter: ['data-theme']
     });
-    
+
     return () => observer.disconnect();
   }, []);
 
@@ -30,7 +30,7 @@ const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-    
+
   return (
     <div style={{
       background: 'var(--bg-tertiary)',

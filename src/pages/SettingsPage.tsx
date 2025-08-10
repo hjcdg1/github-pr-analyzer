@@ -79,8 +79,8 @@ const SettingsPage = ({ settings, updateSettings, onThemeChange }: SettingsPageP
               size="large"
             />
           </Form.Item>
-          
-          <Form.Item style={{ marginBottom: 0}}>
+
+          <Form.Item style={{ marginBottom: 0 }}>
             <Button
               type="primary"
               size="large"
@@ -102,8 +102,8 @@ const SettingsPage = ({ settings, updateSettings, onThemeChange }: SettingsPageP
           <div style={{ marginBottom: 8 }}>
             <Text type="secondary">Choose your preferred color theme</Text>
           </div>
-          <Select 
-            size="large" 
+          <Select
+            size="large"
             style={{ width: '100%' }}
             value={settings.theme}
             onChange={handleThemeChange}
