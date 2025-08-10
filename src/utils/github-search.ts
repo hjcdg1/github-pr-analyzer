@@ -1,6 +1,22 @@
 import { Octokit } from '@octokit/rest';
 import { format } from 'date-fns';
 
+export interface GitHubCommit {
+  sha: string;
+  commit: {
+    message: string;
+    author: {
+      name: string;
+      date: string;
+    };
+  };
+  author: {
+    login: string;
+    avatar_url: string;
+  } | null;
+  html_url: string;
+}
+
 export interface GitHubPR {
   id: number;
   number: number;
@@ -18,6 +34,7 @@ export interface GitHubPR {
   base: {
     ref: string;
   };
+  commits?: GitHubCommit[];
 }
 
 export class GitHubSearchAPI {
@@ -131,7 +148,36 @@ export class GitHubSearchAPI {
           )
         );
 
-        return hasMatchingCommit ? (pr as GitHubPR) : null;
+        if (hasMatchingCommit) {
+          const prWithCommits: GitHubPR = {
+            id: pr.id,
+            number: pr.number,
+            title: pr.title,
+            body: pr.body,
+            merged_at: pr.merged_at,
+            html_url: pr.html_url,
+            user: pr.user,
+            head: pr.head,
+            base: pr.base,
+            commits: commits.map(commit => ({
+              sha: commit.sha,
+              commit: {
+                message: commit.commit.message,
+                author: {
+                  name: commit.commit.author?.name || 'Unknown',
+                  date: commit.commit.author?.date || ''
+                }
+              },
+              author: commit.author ? {
+                login: commit.author.login,
+                avatar_url: commit.author.avatar_url
+              } : null,
+              html_url: commit.html_url
+            }))
+          };
+          return prWithCommits;
+        }
+        return null;
       } catch (error) {
         return null;
       }

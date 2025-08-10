@@ -25,9 +25,10 @@ import {
   User
 } from 'lucide-react';
 import { TabData, Settings } from '../types';
-import { GitHubSearchAPI } from '../utils/github-search';
+import { GitHubCommit, GitHubSearchAPI } from '../utils/github-search';
 import PRChart from '../components/PRChart';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import CommitList from '../components/CommitList';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -56,7 +57,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
   const [currentPage, setCurrentPage] = useState<{ [key: string]: number }>({});
   const [pageSize, setPageSize] = useState(10);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalContent, setModalContent] = useState<{ title: string; body: string }>({ title: '', body: '' });
+  const [modalContent, setModalContent] = useState<{ title: string; body: string; commits?: GitHubCommit[] }>({ title: '', body: '' });
 
   const loadAnalysisData = useCallback(async () => {
     if (window.electronAPI) {
@@ -483,7 +484,8 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                                 onClick={() => {
                                   setModalContent({
                                     title: `PR #${pr.number}: ${pr.title}`,
-                                    body: pr.body || ''
+                                    body: pr.body || '',
+                                    commits: pr.commits || []
                                   });
                                   setModalVisible(true);
                                 }}
@@ -542,11 +544,16 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
               Close
             </Button>
           ]}
-          width={800}
+          width={900}
           centered
         >
           <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            <MarkdownRenderer content={modalContent.body} />
+            {modalContent.body && (
+              <MarkdownRenderer content={modalContent.body} />
+            )}
+            {modalContent.commits && modalContent.commits.length > 0 && (
+              <CommitList commits={modalContent.commits} />
+            )}
           </div>
         </Modal>
       </div>
