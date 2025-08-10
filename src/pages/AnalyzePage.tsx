@@ -22,8 +22,7 @@ import {
   AlertCircle,
   GitPullRequest,
   Calendar,
-  User,
-  Eye
+  User
 } from 'lucide-react';
 import { TabData, Settings } from '../types';
 import { GitHubSearchAPI } from '../utils/github-search';
@@ -398,11 +397,12 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '16px',
-                    marginBottom: '16px'
+                    marginBottom: '16px',
+                    minWidth: 0
                   }}>
                     {paginatedPRs?.map((pr) => (
-                      <div key={pr.id} className="pr-item">
-                        <Space direction="vertical" style={{ width: '100%' }}>
+                      <div key={pr.id} className="pr-item" style={{ minWidth: 0 }}>
+                        <Space direction="vertical" style={{ width: '100%', minWidth: 0 }}>
                           <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Space>
                               <GitPullRequest size={14} />
@@ -444,36 +444,52 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                             </Space>
                           </Space>
                           <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
                             fontSize: '13px',
                             lineHeight: '1.4',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+                            minWidth: 0,
+                            width: '100%'
                           }}>
-                            {pr.title}
-                          </div>
-                          {pr.body && (
-                            <Button
-                              size="small"
-                              icon={<Eye size={12} />}
-                              onClick={() => {
-                                setModalContent({
-                                  title: `PR #${pr.number}: ${pr.title}`,
-                                  body: pr.body || ''
-                                });
-                                setModalVisible(true);
-                              }}
+                            <a
+                              href={pr.html_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               style={{
-                                fontSize: '11px',
-                                height: '24px',
-                                padding: '0 8px'
+                                color: 'inherit',
+                                textDecoration: 'none',
+                                flex: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                minWidth: 0
                               }}
+                              title={pr.title}
                             >
-                              View Description
-                            </Button>
-                          )}
+                              {pr.title}
+                            </a>
+                            {pr.body && (
+                              <Button
+                                size="small"
+                                onClick={() => {
+                                  setModalContent({
+                                    title: `PR #${pr.number}: ${pr.title}`,
+                                    body: pr.body || ''
+                                  });
+                                  setModalVisible(true);
+                                }}
+                                style={{
+                                  fontSize: '11px',
+                                  height: '22px',
+                                  padding: '0 8px',
+                                  flexShrink: 0
+                                }}
+                              >
+                                자세히
+                              </Button>
+                            )}
+                          </div>
                         </Space>
                       </div>
                     ))}
