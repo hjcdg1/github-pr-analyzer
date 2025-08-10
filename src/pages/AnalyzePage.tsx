@@ -194,6 +194,9 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
     const tab = tabs.find(t => t.id === tabId);
     if (!tab) return;
 
+    // Prevent multiple clicks while loading
+    if (tab.loading) return;
+
     if (!settings.githubToken) {
       message.error('Please configure your GitHub token in Settings');
       return;
@@ -204,7 +207,12 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
       return;
     }
 
-    updateTab(tabId, { loading: true, error: undefined });
+    // Clear existing results immediately and start loading
+    updateTab(tabId, {
+      loading: true,
+      error: undefined,
+      prs: undefined // Clear existing results
+    });
 
     try {
       const api = new GitHubSearchAPI(settings.githubToken);
@@ -365,7 +373,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
               onClick={() => analyzePRs(tab.id)}
               loading={tab.loading}
               icon={<Search size={16} />}
-              disabled={!tab.repoUrl || !tab.baseBranch || !tab.startDate || !tab.endDate || tab.usernames.length === 0}
+              disabled={!tab.repoUrl || !tab.baseBranch || !tab.startDate || !tab.endDate || tab.usernames.length === 0 || tab.loading}
             >
               {tab.prs ? 'Re-analyze' : 'Analyze'}
             </Button>
