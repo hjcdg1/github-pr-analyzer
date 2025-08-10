@@ -1,0 +1,77 @@
+{
+  "name": "github-pr-analyzer",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "electron": "NODE_ENV=production electron .",
+    "electron:dev": "NODE_ENV=development electron .",
+    "start": "concurrently \"vite\" \"wait-on http://localhost:5173 && NODE_ENV=development electron .\"",
+    "dist": "npm run build && electron-builder"
+  },
+  "keywords": [
+    "github",
+    "pr",
+    "analyzer",
+    "electron"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "GitHub PR Analyzer - Analyze your GitHub Pull Requests",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hjcdg1/github-pr-analyzer.git"
+  },
+  "build": {
+    "appId": "com.github-pr-analyzer.app",
+    "productName": "GitHub PR Analyzer",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "dist-vite/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "icon": "public/icon.png",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "public/icon.png"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.0",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "wait-on": "^8.0.4"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.0",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "antd": "^5.26.7",
+    "chart.js": "^4.5.0",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "dayjs": "^1.11.13",
+    "lucide-react": "^0.539.0",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.8.0",
+    "remark-gfm": "^4.0.1"
+  }
+}
