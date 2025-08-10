@@ -11,9 +11,9 @@ import {
   Spin,
   Divider,
   Pagination,
-  Collapse,
   Empty,
   Select,
+  Modal,
   App
 } from 'antd';
 import {
@@ -22,7 +22,8 @@ import {
   AlertCircle,
   GitPullRequest,
   Calendar,
-  User
+  User,
+  Eye
 } from 'lucide-react';
 import { TabData, Settings } from '../types';
 import { GitHubSearchAPI } from '../utils/github-search';
@@ -55,6 +56,8 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
   const [connectionStatus, setConnectionStatus] = useState<{ [key: string]: 'idle' | 'testing' | 'success' | 'error' }>({});
   const [currentPage, setCurrentPage] = useState<{ [key: string]: number }>({});
   const [pageSize, setPageSize] = useState(10);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState<{ title: string; body: string }>({ title: '', body: '' });
 
   const loadAnalysisData = useCallback(async () => {
     if (window.electronAPI) {
@@ -459,27 +462,24 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                             </a>
                           </div>
                           {pr.body && (
-                            <Collapse
-                              ghost
+                            <Button
                               size="small"
-                              style={{ margin: '0' }}
-                              items={[
-                                {
-                                  key: '1',
-                                  label: (
-                                    <span style={{
-                                      fontSize: '11px',
-                                      color: 'var(--text-secondary)'
-                                    }}>
-                                      View Description
-                                    </span>
-                                  ),
-                                  children: (
-                                    <MarkdownRenderer content={pr.body} />
-                                  )
-                                }
-                              ]}
-                            />
+                              icon={<Eye size={12} />}
+                              onClick={() => {
+                                setModalContent({
+                                  title: `PR #${pr.number}: ${pr.title}`,
+                                  body: pr.body || ''
+                                });
+                                setModalVisible(true);
+                              }}
+                              style={{
+                                fontSize: '11px',
+                                height: '24px',
+                                padding: '0 8px'
+                              }}
+                            >
+                              View Description
+                            </Button>
                           )}
                         </Space>
                       </div>
@@ -515,6 +515,23 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
             <Text type="danger">{tab.error}</Text>
           </Card>
         )}
+
+        <Modal
+          title={modalContent.title}
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={[
+            <Button key="close" onClick={() => setModalVisible(false)}>
+              Close
+            </Button>
+          ]}
+          width={800}
+          centered
+        >
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <MarkdownRenderer content={modalContent.body} />
+          </div>
+        </Modal>
       </div>
     );
   };
