@@ -452,14 +452,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis'
                           }}>
-                            <a
-                              href={pr.html_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ color: 'inherit', textDecoration: 'none' }}
-                            >
-                              {pr.title}
-                            </a>
+                            {pr.title}
                           </div>
                           {pr.body && (
                             <Button
