@@ -393,7 +393,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                     <Select
                       value={pageSize}
                       onChange={setPageSize}
-                      style={{ width: 120 }}
+                      style={{ width: 140 }}
                     >
                       <Select.Option value={10}>10 per page</Select.Option>
                       <Select.Option value={50}>50 per page</Select.Option>
