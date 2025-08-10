@@ -57,7 +57,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
   const [currentPage, setCurrentPage] = useState<{ [key: string]: number }>({});
   const [pageSize, setPageSize] = useState(10);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalContent, setModalContent] = useState<{ title: string; body: string; commits?: GitHubCommit[] }>({ title: '', body: '' });
+  const [modalContent, setModalContent] = useState<{ title: string; body: string; commits?: GitHubCommit[]; usernames?: string[] }>({ title: '', body: '' });
 
   const loadAnalysisData = useCallback(async () => {
     if (window.electronAPI) {
@@ -485,7 +485,8 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                                   setModalContent({
                                     title: `PR #${pr.number}: ${pr.title}`,
                                     body: pr.body || '',
-                                    commits: pr.commits || []
+                                    commits: pr.commits || [],
+                                    usernames: tab.usernames
                                   });
                                   setModalVisible(true);
                                 }}
@@ -552,7 +553,10 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
               <MarkdownRenderer content={modalContent.body} />
             )}
             {modalContent.commits && modalContent.commits.length > 0 && (
-              <CommitList commits={modalContent.commits} />
+              <CommitList
+                commits={modalContent.commits}
+                usernames={modalContent.usernames || []}
+              />
             )}
           </div>
         </Modal>

@@ -7,9 +7,10 @@ const { Text } = Typography;
 
 interface CommitListProps {
   commits: GitHubCommit[];
+  usernames: string[];
 }
 
-const CommitList = ({ commits }: CommitListProps) => {
+const CommitList = ({ commits, usernames }: CommitListProps) => {
   if (!commits || commits.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
@@ -21,6 +22,13 @@ const CommitList = ({ commits }: CommitListProps) => {
   const sortedCommits = commits.sort((a, b) =>
     new Date(b.commit.author.date).getTime() - new Date(a.commit.author.date).getTime()
   );
+
+  const isTargetAuthor = (commit: GitHubCommit): boolean => {
+    return usernames.some(username =>
+      commit.author?.login?.toLowerCase() === username.toLowerCase() ||
+      commit.commit.author?.name?.toLowerCase() === username.toLowerCase()
+    );
+  };
 
   return (
     <div style={{ marginTop: '24px' }}>
@@ -50,82 +58,88 @@ const CommitList = ({ commits }: CommitListProps) => {
           zIndex: 0
         }} />
 
-        {sortedCommits.map((commit, index) => (
-          <div
-            key={commit.sha}
-            style={{
-              position: 'relative',
-              paddingLeft: '32px',
-              paddingBottom: index === sortedCommits.length - 1 ? '0' : '16px',
-              zIndex: 1
-            }}
-          >
-            {/* Timeline dot */}
-            <div style={{
-              position: 'absolute',
-              left: '2px',
-              top: '6px',
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: 'var(--bg-primary)',
-              border: '2px solid #4D8F94',
-              zIndex: 2
-            }} />
+        {sortedCommits.map((commit, index) => {
+          const isTarget = isTargetAuthor(commit);
+          return (
+            <div
+              key={commit.sha}
+              style={{
+                position: 'relative',
+                paddingLeft: '32px',
+                paddingBottom: index === sortedCommits.length - 1 ? '0' : '16px',
+                zIndex: 1,
+                opacity: isTarget ? 1 : 0.5
+              }}
+            >
+              {/* Timeline dot */}
+              <div style={{
+                position: 'absolute',
+                left: '2px',
+                top: '6px',
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: 'var(--bg-primary)',
+                border: `2px solid ${isTarget ? '#4D8F94' : 'var(--border-color)'}`,
+                zIndex: 2
+              }} />
 
-            <div>
-              <div style={{ marginBottom: '4px' }}>
-                <a
-                  href={commit.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: 'var(--text-primary)',
-                    textDecoration: 'none',
-                    fontSize: '13px',
-                    lineHeight: '1.4',
-                    fontWeight: '500'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.textDecoration = 'underline';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.textDecoration = 'none';
-                  }}
-                >
-                  {commit.commit.message.split('\n')[0]}
-                </a>
+              <div>
+                <div style={{ marginBottom: '4px' }}>
+                  <a
+                    href={commit.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: isTarget ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: '13px',
+                      lineHeight: '1.4',
+                      fontWeight: isTarget ? '500' : '400'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.textDecoration = 'underline';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.textDecoration = 'none';
+                    }}
+                  >
+                    {commit.commit.message.split('\n')[0]}
+                  </a>
+                </div>
+
+                <Space size={12} style={{ fontSize: '11px' }}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    color: isTarget ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+                    fontWeight: isTarget ? 'normal' : '300'
+                  }}>
+                    <User size={10} />
+                    {commit.author?.login || commit.commit.author.name}
+                  </span>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    color: isTarget ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+                    fontWeight: isTarget ? 'normal' : '300'
+                  }}>
+                    <Calendar size={10} />
+                    {dayjs(commit.commit.author.date).format('MM/DD HH:mm')}
+                  </span>
+                  <span style={{
+                    color: 'var(--text-tertiary)',
+                    fontFamily: 'Monaco, Consolas, "Courier New", monospace'
+                  }}>
+                    {commit.sha.substring(0, 7)}
+                  </span>
+                </Space>
               </div>
-
-              <Space size={12} style={{ fontSize: '11px' }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  color: 'var(--text-secondary)'
-                }}>
-                  <User size={10} />
-                  {commit.author?.login || commit.commit.author.name}
-                </span>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  color: 'var(--text-secondary)'
-                }}>
-                  <Calendar size={10} />
-                  {dayjs(commit.commit.author.date).format('MM/DD HH:mm')}
-                </span>
-                <span style={{
-                  color: 'var(--text-tertiary)',
-                  fontFamily: 'Monaco, Consolas, "Courier New", monospace'
-                }}>
-                  {commit.sha.substring(0, 7)}
-                </span>
-              </Space>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
