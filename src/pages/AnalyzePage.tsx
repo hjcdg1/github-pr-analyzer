@@ -611,6 +611,12 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                     total={tab.prs.length}
                     pageSize={pageSize}
                     onChange={(page) => setCurrentPage({ ...currentPage, [tab.id]: page })}
+                    onShowSizeChange={(_, size) => {
+                      setPageSize(size);
+                      setCurrentPage({ ...currentPage, [tab.id]: 1 });
+                    }}
+                    showSizeChanger
+                    pageSizeOptions={['10', '50', '100']}
                     showTotal={(total) => `Total ${total} PRs`}
                     style={{ marginTop: 16, textAlign: 'center' }}
                   />
