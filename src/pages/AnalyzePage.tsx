@@ -61,6 +61,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
   const [pageSize, setPageSize] = useState(10);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState<{ title: string; body: string; commits?: GitHubCommit[]; usernames?: string[] }>({ title: '', body: '' });
+  const [searchKeyword, setSearchKeyword] = useState<{ [key: string]: string }>({});
 
   const loadAnalysisData = useCallback(async () => {
     if (window.electronAPI) {
@@ -320,10 +321,30 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
 
   const renderTabContent = (tab: TabData) => {
     const status = connectionStatus[tab.id] || 'idle';
+    const keyword = searchKeyword[tab.id] || '';
+    
+    // Filter PRs based on search keyword
+    const filteredPRs = tab.prs?.filter(pr => {
+      if (!keyword) return true;
+      
+      const searchTerm = keyword.toLowerCase();
+      
+      // Check PR number
+      if (pr.number.toString().includes(searchTerm)) return true;
+      
+      // Check PR title
+      if (pr.title?.toLowerCase().includes(searchTerm)) return true;
+      
+      // Check PR body
+      if (pr.body?.toLowerCase().includes(searchTerm)) return true;
+      
+      return false;
+    });
+    
     const currentPageNum = currentPage[tab.id] || 1;
     const startIndex = (currentPageNum - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    const paginatedPRs = tab.prs?.slice(startIndex, endIndex);
+    const paginatedPRs = filteredPRs?.slice(startIndex, endIndex);
 
     return (
       <div>
@@ -468,7 +489,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
 
                 <Card
                   className="pr-list"
-                  title={`Pull Requests (${tab.prs.length} total)`}
+                  title={`Pull Requests (${filteredPRs?.length || 0} / ${tab.prs.length} total)`}
                   extra={
                     <Button
                       icon={<Download size={14} />}
@@ -479,7 +500,18 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                     </Button>
                   }
                 >
-                  <div style={{ marginBottom: 16 }}>
+                  <div style={{ marginBottom: 16, display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <Input
+                      placeholder="Search by PR number, title, or description..."
+                      value={keyword}
+                      onChange={(e) => {
+                        setSearchKeyword({ ...searchKeyword, [tab.id]: e.target.value });
+                        setCurrentPage({ ...currentPage, [tab.id]: 1 });
+                      }}
+                      allowClear
+                      prefix={<Search size={16} />}
+                      style={{ flex: 1, maxWidth: '400px' }}
+                    />
                     <Select
                       value={pageSize}
                       onChange={setPageSize}
@@ -619,7 +651,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
 
                   <Pagination
                     current={currentPageNum}
-                    total={tab.prs.length}
+                    total={filteredPRs?.length || 0}
                     pageSize={pageSize}
                     onChange={(page) => setCurrentPage({ ...currentPage, [tab.id]: page })}
                     onShowSizeChange={(_, size) => {
