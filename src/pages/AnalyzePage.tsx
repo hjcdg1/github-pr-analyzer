@@ -319,6 +319,28 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
     return targetCommits.length > 0 && targetCommits.length < pr.commits.length;
   };
 
+  const highlightText = (text: string, keyword: string): React.ReactNode => {
+    if (!keyword || !text) return text;
+    
+    const parts = text.split(new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+    
+    return parts.map((part, index) => 
+      part.toLowerCase() === keyword.toLowerCase() ? (
+        <span key={index} style={{ 
+          backgroundColor: '#fadb14', 
+          color: '#000',
+          padding: '0 2px', 
+          borderRadius: '2px',
+          fontWeight: 600
+        }}>
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   const renderTabContent = (tab: TabData) => {
     const status = connectionStatus[tab.id] || 'idle';
     const keyword = searchKeyword[tab.id] || '';
@@ -550,7 +572,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                                 }}
                                 title={`Click to copy PR number ${pr.number}`}
                               >
-                                #{pr.number}
+                                #{highlightText(pr.number.toString(), keyword)}
                               </Text>
                               {hasMixedCommits(pr, tab.usernames) && (
                                 <Tooltip title="이 PR에는 다른 작성자의 커밋도 포함되어 있습니다">
@@ -619,7 +641,7 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                               }}
                               title={pr.title}
                             >
-                              {pr.title}
+                              {highlightText(pr.title || '', keyword)}
                             </a>
                             {pr.body && (
                               <Button
