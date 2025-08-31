@@ -504,10 +504,21 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
                           <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Space>
                               <GitPullRequest size={14} />
-                              <Text strong style={{ fontSize: '14px' }}>
-                                <a href={pr.html_url} target="_blank" rel="noopener noreferrer">
-                                  #{pr.number}
-                                </a>
+                              <Text 
+                                strong 
+                                style={{ 
+                                  fontSize: '14px',
+                                  cursor: 'pointer',
+                                  userSelect: 'none',
+                                  color: '#1890ff'
+                                }}
+                                onClick={() => {
+                                  navigator.clipboard.writeText(pr.number.toString());
+                                  message.success(`PR number ${pr.number} copied!`);
+                                }}
+                                title={`Click to copy PR number ${pr.number}`}
+                              >
+                                #{pr.number}
                               </Text>
                               {hasMixedCommits(pr, tab.usernames) && (
                                 <Tooltip title="이 PR에는 다른 작성자의 커밋도 포함되어 있습니다">
