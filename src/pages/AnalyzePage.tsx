@@ -322,23 +322,93 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
   const highlightText = (text: string, keyword: string): React.ReactNode => {
     if (!keyword || !text) return text;
     
-    const parts = text.split(new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+    const result: React.ReactNode[] = [];
+    const lowerText = text.toLowerCase();
+    const lowerKeyword = keyword.toLowerCase();
     
-    return parts.map((part, index) => 
-      part.toLowerCase() === keyword.toLowerCase() ? (
-        <span key={index} style={{ 
-          backgroundColor: '#fadb14', 
-          color: '#000',
-          padding: '0 2px', 
-          borderRadius: '2px',
-          fontWeight: 600
-        }}>
-          {part}
-        </span>
-      ) : (
-        part
-      )
-    );
+    // Try exact match first
+    if (lowerText.includes(lowerKeyword)) {
+      // Exact match found
+      let lastIndex = 0;
+      let matchIndex = lowerText.indexOf(lowerKeyword);
+      
+      while (matchIndex !== -1) {
+        // Add text before match
+        if (matchIndex > lastIndex) {
+          result.push(text.substring(lastIndex, matchIndex));
+        }
+        
+        // Add highlighted match
+        result.push(
+          <span key={`highlight-${matchIndex}`} style={{ 
+            backgroundColor: '#fadb14', 
+            color: '#000',
+            padding: '0 2px', 
+            borderRadius: '2px',
+            fontWeight: 600
+          }}>
+            {text.substring(matchIndex, matchIndex + keyword.length)}
+          </span>
+        );
+        
+        lastIndex = matchIndex + keyword.length;
+        matchIndex = lowerText.indexOf(lowerKeyword, lastIndex);
+      }
+      
+      // Add remaining text
+      if (lastIndex < text.length) {
+        result.push(text.substring(lastIndex));
+      }
+      
+      return result.length > 0 ? result : text;
+    }
+    
+    // If no exact match, check if keyword without spaces matches text without spaces
+    const textNoSpaces = lowerText.replace(/\s+/g, '');
+    const keywordNoSpaces = lowerKeyword.replace(/\s+/g, '');
+    
+    const noSpaceIndex = textNoSpaces.indexOf(keywordNoSpaces);
+    if (noSpaceIndex !== -1) {
+      // Find the actual position in the original text
+      let charCount = 0;
+      let startPos = -1;
+      let endPos = -1;
+      
+      for (let i = 0; i < text.length; i++) {
+        if (!/\s/.test(text[i])) {
+          if (charCount === noSpaceIndex && startPos === -1) {
+            startPos = i;
+          }
+          if (charCount === noSpaceIndex + keywordNoSpaces.length - 1) {
+            endPos = i + 1;
+            break;
+          }
+          charCount++;
+        } else if (startPos !== -1 && endPos === -1) {
+          // Continue including spaces within the match
+          continue;
+        }
+      }
+      
+      if (startPos !== -1 && endPos !== -1) {
+        result.push(text.substring(0, startPos));
+        result.push(
+          <span key="highlight-flexible" style={{ 
+            backgroundColor: '#fadb14', 
+            color: '#000',
+            padding: '0 2px', 
+            borderRadius: '2px',
+            fontWeight: 600
+          }}>
+            {text.substring(startPos, endPos)}
+          </span>
+        );
+        result.push(text.substring(endPos));
+        return result;
+      }
+    }
+    
+    return text;
   };
 
   const renderTabContent = (tab: TabData) => {
@@ -349,16 +419,20 @@ const AnalyzePage = ({ settings }: AnalyzePageProps) => {
     const filteredPRs = tab.prs?.filter(pr => {
       if (!keyword) return true;
       
-      const searchTerm = keyword.toLowerCase();
+      // Remove spaces from search term for flexible matching
+      const searchTerm = keyword.toLowerCase().replace(/\s+/g, '');
+      const searchWithSpaces = keyword.toLowerCase();
       
       // Check PR number
-      if (pr.number.toString().includes(searchTerm)) return true;
+      if (pr.number.toString().includes(searchWithSpaces)) return true;
       
-      // Check PR title
-      if (pr.title?.toLowerCase().includes(searchTerm)) return true;
+      // Check PR title (both with and without spaces)
+      if (pr.title?.toLowerCase().includes(searchWithSpaces)) return true;
+      if (pr.title?.toLowerCase().replace(/\s+/g, '').includes(searchTerm)) return true;
       
-      // Check PR body
-      if (pr.body?.toLowerCase().includes(searchTerm)) return true;
+      // Check PR body (both with and without spaces)
+      if (pr.body?.toLowerCase().includes(searchWithSpaces)) return true;
+      if (pr.body?.toLowerCase().replace(/\s+/g, '').includes(searchTerm)) return true;
       
       return false;
     });
